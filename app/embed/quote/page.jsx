@@ -9,6 +9,7 @@ function WidgetForm() {
 
   const [shopConfig, setShopConfig] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   const [vehicleSize, setVehicleSize] = useState('sedan');
   const [interiorCondition, setInteriorCondition] = useState('clean');
@@ -29,9 +30,15 @@ function WidgetForm() {
           .eq('id', shopId)
           .single();
         
-        if (!error && data) setShopConfig(data);
+        if (error) {
+          setFetchError(error.message);
+        } else if (data) {
+          setShopConfig(data);
+        } else {
+          setFetchError('Shop not found');
+        }
       } catch (err) {
-        console.error('Error contacting Supabase cluster:', err);
+        setFetchError(err.message);
       } finally {
         setLoading(false);
       }
@@ -104,7 +111,13 @@ function WidgetForm() {
   };
 
   if (loading) return <div className="p-8 text-center text-sm text-slate-400 animate-pulse">Initializing Data Parameters...</div>;
-  if (!shopConfig) return <div className="p-8 text-center text-red-500 font-medium">Error: Invalid Shop Authorization Node</div>;
+  if (!shopConfig) return (
+    <div className="p-8 text-center">
+      <p className="text-red-500 font-medium">Error: Shop configuration unavailable</p>
+      {fetchError && <p className="text-xs text-slate-400 mt-2">{fetchError}</p>}
+      <p className="text-xs text-slate-400 mt-2">Use <code className="bg-slate-100 px-1 rounded">?shop_id=YOUR_SHOP_UUID</code> in the URL</p>
+    </div>
+  );
 
   return (
     <div className="max-w-md mx-auto bg-white border border-slate-100 shadow-2xl rounded-2xl p-6 font-sans text-slate-800">
