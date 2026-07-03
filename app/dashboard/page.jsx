@@ -1,14 +1,13 @@
 'use client';
 import { Suspense, useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const VEHICLE_SIZES = ['sedan', 'suv', 'truck'];
 const CONDITIONS = ['clean', 'dirty', 'disaster'];
 
 function DashboardContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -21,8 +20,7 @@ function DashboardContent() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [stripeLoading, setStripeLoading] = useState(false);
-  const [stripeMsg, setStripeMsg] = useState(null);
+  const [paymentInfo, setPaymentInfo] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -35,12 +33,6 @@ function DashboardContent() {
     if (!session) return;
     loadData();
   }, [session]);
-
-  useEffect(() => {
-    const stripeStatus = searchParams.get('stripe');
-    if (stripeStatus === 'success') setStripeMsg('Stripe account connected successfully!');
-    if (stripeStatus === 'refresh') setStripeMsg('Stripe onboarding was interrupted. Try again.');
-  }, [searchParams]);
 
   async function loadData() {
     const email = session.user.email;
@@ -56,6 +48,8 @@ function DashboardContent() {
       return;
     }
 
+    setPaymentInfo(shopData.payment_info || '');
+
     const [rulesRes, bookingsRes] = await Promise.all([
       supabase.from('pricing_rules').select('*').eq('shop_id', shopData.id),
       supabase.from('quotes').select('*, customers(*)').eq('shop_id', shopData.id).order('created_at', { ascending: false }).limit(20),
@@ -67,24 +61,6 @@ function DashboardContent() {
     setLoading(false);
   }
 
-  async function connectStripe() {
-    setStripeLoading(true);
-    setStripeMsg(null);
-
-    const res = await fetch('/api/stripe/create-account', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        shopId: shop.id,
-        returnUrl: window.location.origin + '/dashboard',
-      }),
-    });
-
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else setStripeMsg('Error: ' + (data.error || 'Failed to create Stripe account'));
-    setStripeLoading(false);
-  }
 
   function getRule(category, optionName) {
     return pricingRules.find(r => r.category === category && r.option_name === optionName) || { price_adjustment: 0 };
@@ -119,6 +95,7 @@ function DashboardContent() {
         base_suv_price: Number(shop.base_suv_price),
         base_truck_price: Number(shop.base_truck_price),
         is_weekend_pricing_active: shop.is_weekend_pricing_active,
+        payment_info: paymentInfo,
       })
       .eq('id', shop.id);
 
@@ -165,26 +142,14 @@ function DashboardContent() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-        {stripeMsg && (
-          <div className={`p-3 rounded-xl text-xs ${stripeMsg.includes('success') ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300'}`}>
-            {stripeMsg}
-          </div>
-        )}
 
-        {typeof process !== 'undefined' && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
         <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stripe Connect</h2>
-          <p className="text-xs text-slate-400">Receive 20% deposits directly to your bank account.</p>
-          {shop.stripe_onboarding_complete ? (
-            <p className="text-xs text-emerald-400 font-medium">Stripe connected ✓</p>
-          ) : (
-            <button onClick={connectStripe} disabled={stripeLoading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50">
-              {stripeLoading ? 'Connecting...' : shop.stripe_account_id ? 'Complete Stripe Onboarding' : 'Connect Stripe'}
-            </button>
-          )}
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Info</h2>
+          <p className="text-xs text-slate-400">Share your UPI ID, payment link, or instructions for customers to pay the 20% deposit.</p>
+          <input type="text" value={paymentInfo} onChange={(e) => setPaymentInfo(e.target.value)}
+            placeholder="e.g. UPI: detailer@upi or https://razorpay.me/yourlink"
+            className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
         </section>
-        )}
 
         <section className="bg-slate-800 rounded-xl p-5 space-y-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Vehicle Base Prices</h2>

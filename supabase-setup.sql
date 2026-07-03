@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS shops (
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS owner_email TEXT;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_account_id TEXT;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_onboarding_complete BOOLEAN DEFAULT false;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS payment_info TEXT;
 
 -- ============================================
 -- Table: pricing_rules
@@ -89,12 +90,13 @@ CREATE TABLE IF NOT EXISTS inspections (
 -- ============================================
 -- Seed: demo shop
 -- ============================================
-INSERT INTO shops (id, business_name, owner_email, base_sedan_price, base_suv_price, base_truck_price, is_weekend_pricing_active)
+INSERT INTO shops (id, business_name, owner_email, base_sedan_price, base_suv_price, base_truck_price, is_weekend_pricing_active, payment_info)
 VALUES (
   '4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
   'Premium Detailing Co.',
   'you@email.com',
-  150, 200, 250, false
+  150, 200, 250, false,
+  'UPI: premium@upi'
 )
 ON CONFLICT (id) DO UPDATE SET
   owner_email = EXCLUDED.owner_email,

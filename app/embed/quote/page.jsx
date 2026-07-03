@@ -225,7 +225,7 @@ function WidgetForm() {
           <p className="text-xs text-slate-400 mt-1">Save this ID — you'll need it for your appointment.</p>
         </div>
 
-        <p className="text-xs text-slate-400 text-center mb-3">Estimated total: ${priceCalculations.total} (20% deposit: ${priceCalculations.deposit}). Payment to be collected by the shop.</p>
+        <p className="text-xs text-slate-400 text-center mb-3">Estimated total: ${priceCalculations.total} (20% deposit: ${priceCalculations.deposit})</p>
 
         {clientSecret && stripePromise ? (
           <div className="border-t border-slate-100 pt-4 mt-2">
@@ -243,10 +243,17 @@ function WidgetForm() {
             </Elements>
           </div>
         ) : (
-          <button onClick={() => setBookingState('confirmed')}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl tracking-wider uppercase transition">
-            Done — I'll pay at the shop
-          </button>
+          <div className="border-t border-slate-100 pt-4 mt-2 space-y-3">
+            {shopConfig.payment_info && (
+              <p className="text-xs text-center text-slate-600">
+                Send the deposit via: <span className="font-bold text-blue-700">{shopConfig.payment_info}</span>
+              </p>
+            )}
+            <button onClick={() => setBookingState('confirmed')}
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl tracking-wider uppercase transition">
+              Done — I'll pay the deposit
+            </button>
+          </div>
         )}
 
         {bookingError && <p className="text-xs text-red-500 text-center mt-2">{bookingError}</p>}
