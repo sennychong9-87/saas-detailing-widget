@@ -8,6 +8,7 @@ function WidgetForm() {
   const shopId = searchParams.get('shop_id') || '4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d';
 
   const [shopConfig, setShopConfig] = useState(null);
+  const [pricingRules, setPricingRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
 
@@ -24,16 +25,16 @@ function WidgetForm() {
   useEffect(() => {
     async function fetchShopData() {
       try {
-        const { data, error } = await supabase
-          .from('shops')
-          .select('*')
-          .eq('id', shopId)
-          .single();
-        
-        if (error) {
-          setFetchError(error.message);
-        } else if (data) {
-          setShopConfig(data);
+        const [shopRes, rulesRes] = await Promise.all([
+          supabase.from('shops').select('*').eq('id', shopId).single(),
+          supabase.from('pricing_rules').select('*').eq('shop_id', shopId),
+        ]);
+
+        if (shopRes.error) {
+          setFetchError(shopRes.error.message);
+        } else if (shopRes.data) {
+          setShopConfig(shopRes.data);
+          setPricingRules(rulesRes.data || []);
         } else {
           setFetchError('Shop not found');
         }
@@ -53,11 +54,14 @@ function WidgetForm() {
     if (vehicleSize === 'suv') base = shopConfig.base_suv_price;
     if (vehicleSize === 'truck') base = shopConfig.base_truck_price;
 
+    const ruleLookup = (category, option) => {
+      const rule = pricingRules.find(r => r.category === category && r.option_name === option);
+      return rule ? Number(rule.price_adjustment) : 0;
+    };
+
     let modifiers = 0;
-    if (interiorCondition === 'dirty') modifiers += 50;
-    if (interiorCondition === 'disaster') modifiers += 120;
-    if (exteriorCondition === 'dirty') modifiers += 40;
-    if (exteriorCondition === 'disaster') modifiers += 150;
+    modifiers += ruleLookup('interior_condition', interiorCondition);
+    modifiers += ruleLookup('exterior_condition', exteriorCondition);
 
     let subTotal = Number(base) + modifiers;
 
@@ -71,7 +75,7 @@ function WidgetForm() {
       total: Math.round(subTotal),
       deposit: Math.round(depositRequired)
     };
-  }, [shopConfig, vehicleSize, interiorCondition, exteriorCondition]);
+  }, [shopConfig, pricingRules, vehicleSize, interiorCondition, exteriorCondition]);
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();

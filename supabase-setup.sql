@@ -17,6 +17,30 @@ CREATE TABLE IF NOT EXISTS shops (
 );
 
 -- ============================================
+-- Table: pricing_rules
+-- Condition modifiers per shop (interior/exterior)
+-- ============================================
+CREATE TABLE IF NOT EXISTS pricing_rules (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  shop_id UUID NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  category TEXT NOT NULL CHECK (category IN ('interior_condition', 'exterior_condition')),
+  option_name TEXT NOT NULL CHECK (option_name IN ('clean', 'dirty', 'disaster')),
+  price_adjustment NUMERIC NOT NULL DEFAULT 0,
+  UNIQUE(shop_id, category, option_name)
+);
+
+-- ============================================
+-- Table: shop_owners
+-- Links Supabase Auth user emails to shops
+-- ============================================
+CREATE TABLE IF NOT EXISTS shop_owners (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT NOT NULL UNIQUE,
+  shop_id UUID NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  UNIQUE(shop_id)
+);
+
+-- ============================================
 -- Table: customers
 -- ============================================
 CREATE TABLE IF NOT EXISTS customers (
@@ -59,15 +83,49 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
+-- Seed: Pricing rules for demo shop
+-- ============================================
+INSERT INTO pricing_rules (shop_id, category, option_name, price_adjustment) VALUES
+  ('4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d', 'interior_condition', 'clean',    0),
+  ('4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d', 'interior_condition', 'dirty',    50),
+  ('4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d', 'interior_condition', 'disaster', 120),
+  ('4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d', 'exterior_condition', 'clean',    0),
+  ('4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d', 'exterior_condition', 'dirty',    40),
+  ('4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d', 'exterior_condition', 'disaster', 150)
+ON CONFLICT (shop_id, category, option_name) DO NOTHING;
+
+-- ============================================
 -- RLS: Allow anonymous reads on shops, writes on customers/quotes
 -- ============================================
 ALTER TABLE shops ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pricing_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shop_owners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
 
+-- Shops: anyone can read, only owner can update
 DROP POLICY IF EXISTS "anon_can_read_shops" ON shops;
 CREATE POLICY "anon_can_read_shops" ON shops FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "owner_can_update_shops" ON shops;
+CREATE POLICY "owner_can_update_shops" ON shops FOR UPDATE USING (
+  id IN (SELECT shop_id FROM shop_owners WHERE email = auth.jwt() ->> 'email')
+);
+
+-- Pricing rules: anyone can read, only owner can manage
+DROP POLICY IF EXISTS "anon_can_read_pricing" ON pricing_rules;
+CREATE POLICY "anon_can_read_pricing" ON pricing_rules FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "owner_can_manage_pricing" ON pricing_rules;
+CREATE POLICY "owner_can_manage_pricing" ON pricing_rules FOR ALL USING (
+  shop_id IN (SELECT shop_id FROM shop_owners WHERE email = auth.jwt() ->> 'email')
+);
+
+-- Shop owners: only the owner can read their own record
+DROP POLICY IF EXISTS "owner_can_read_own" ON shop_owners;
+CREATE POLICY "owner_can_read_own" ON shop_owners FOR SELECT USING (email = auth.jwt() ->> 'email');
+
+-- Customers/Quotes: anonymous insert, owner can read
 DROP POLICY IF EXISTS "anon_can_insert_customers" ON customers;
 CREATE POLICY "anon_can_insert_customers" ON customers FOR INSERT WITH CHECK (true);
 
