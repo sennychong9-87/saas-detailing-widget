@@ -69,7 +69,7 @@ function WidgetForm() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingState, setBookingState] = useState('form'); // form | created | paid
+  const [bookingState, setBookingState] = useState('form'); // form | created | confirmed
   const [bookingId, setBookingId] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
   const [bookingError, setBookingError] = useState(null);
@@ -200,17 +200,16 @@ function WidgetForm() {
     </div>
   );
 
-  if (bookingState === 'paid') {
+  if (bookingState === 'confirmed') {
     return (
       <div className="max-w-md mx-auto bg-white border border-slate-100 shadow-2xl rounded-2xl p-6 font-sans text-slate-800">
         <div className="text-center py-8 space-y-3">
           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">✓</div>
           <h3 className="text-sm font-bold text-slate-900">Booking Confirmed</h3>
           <p className="text-xs text-slate-500 px-4 leading-relaxed">
-            Your booking <span className="font-mono font-bold text-slate-800">{bookingId}</span> is confirmed.
-            Present this ID on the day of your appointment.
+            Your booking ID: <span className="font-mono font-bold text-slate-800 text-base block mt-1">{bookingId}</span>
           </p>
-          <p className="text-xs text-slate-500">Deposit of <span className="font-bold text-emerald-600">${priceCalculations.deposit}</span> received.</p>
+          <p className="text-xs text-slate-400">Present this ID on the day of your appointment.</p>
         </div>
       </div>
     );
@@ -223,12 +222,14 @@ function WidgetForm() {
           <h3 className="text-sm font-bold text-slate-900">Booking Created</h3>
           <p className="text-xs text-slate-500 mt-1">Your booking ID:</p>
           <p className="text-lg font-mono font-bold text-blue-700 tracking-wider mt-1">{bookingId}</p>
-          <p className="text-xs text-slate-400 mt-1">Keep this ID — you'll need it for your appointment.</p>
+          <p className="text-xs text-slate-400 mt-1">Save this ID — you'll need it for your appointment.</p>
         </div>
+
+        <p className="text-xs text-slate-400 text-center mb-3">Estimated total: ${priceCalculations.total} (20% deposit: ${priceCalculations.deposit}). Payment to be collected by the shop.</p>
 
         {clientSecret && stripePromise ? (
           <div className="border-t border-slate-100 pt-4 mt-2">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">Complete your deposit payment</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">Pay deposit now</p>
             <Elements stripe={stripePromise} options={{ clientSecret }}>
               <PaymentForm
                 bookingId={bookingId}
@@ -236,13 +237,16 @@ function WidgetForm() {
                 clientSecret={clientSecret}
                 onComplete={() => {
                   supabase.from('quotes').update({ payment_status: 'paid', status: 'confirmed' }).eq('booking_id', bookingId).then();
-                  setBookingState('paid');
+                  setBookingState('confirmed');
                 }}
               />
             </Elements>
           </div>
         ) : (
-          <p className="text-xs text-slate-400 text-center mt-4">Payment processing unavailable for this shop.</p>
+          <button onClick={() => setBookingState('confirmed')}
+            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl tracking-wider uppercase transition">
+            Done — I'll pay at the shop
+          </button>
         )}
 
         {bookingError && <p className="text-xs text-red-500 text-center mt-2">{bookingError}</p>}

@@ -171,6 +171,7 @@ function DashboardContent() {
           </div>
         )}
 
+        {typeof process !== 'undefined' && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
         <section className="bg-slate-800 rounded-xl p-5 space-y-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stripe Connect</h2>
           <p className="text-xs text-slate-400">Receive 20% deposits directly to your bank account.</p>
@@ -183,6 +184,7 @@ function DashboardContent() {
             </button>
           )}
         </section>
+        )}
 
         <section className="bg-slate-800 rounded-xl p-5 space-y-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Vehicle Base Prices</h2>
