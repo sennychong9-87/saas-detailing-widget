@@ -92,6 +92,7 @@ function DashboardContent() {
     const { error: shopErr } = await supabase
       .from('shops')
       .update({
+        business_name: shop.business_name,
         base_sedan_price: Number(shop.base_sedan_price),
         base_suv_price: Number(shop.base_suv_price),
         base_truck_price: Number(shop.base_truck_price),
@@ -143,6 +144,13 @@ function DashboardContent() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+
+        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Business Name</h2>
+          <input type="text" value={shop.business_name} onChange={(e) => updateShopField('business_name', e.target.value)}
+            placeholder="Your detailing company name"
+            className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
+        </section>
 
         <section className="bg-slate-800 rounded-xl p-5 space-y-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Info</h2>
