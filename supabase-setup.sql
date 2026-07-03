@@ -66,6 +66,10 @@ CREATE TABLE IF NOT EXISTS quotes (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS booking_id TEXT UNIQUE;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS stripe_payment_intent_id TEXT;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'pending';
+
 -- ============================================
 -- Table: inspections
 -- ============================================
