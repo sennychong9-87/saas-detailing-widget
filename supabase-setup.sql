@@ -10,13 +10,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS shops (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   business_name TEXT NOT NULL,
-  owner_email TEXT,
   base_sedan_price NUMERIC NOT NULL DEFAULT 150,
   base_suv_price NUMERIC NOT NULL DEFAULT 200,
   base_truck_price NUMERIC NOT NULL DEFAULT 250,
   is_weekend_pricing_active BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add owner_email column if missing (for existing tables)
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS owner_email TEXT;
 
 -- ============================================
 -- Table: pricing_rules
@@ -67,7 +69,7 @@ INSERT INTO shops (id, business_name, owner_email, base_sedan_price, base_suv_pr
 VALUES (
   '4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
   'Premium Detailing Co.',
-  'you@email.com',
+  'joshua.touthang.87@email.com',
   150,
   200,
   250,

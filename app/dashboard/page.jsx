@@ -35,11 +35,13 @@ export default function DashboardPage() {
   async function loadData() {
     const email = session.user.email;
 
-    const { data: shopData } = await supabase
+    const { data: shopData, error: shopErr } = await supabase
       .from('shops')
       .select('*')
       .eq('owner_email', email)
       .single();
+
+    if (shopErr) console.error('Shop fetch error:', shopErr);
 
     if (!shopData) {
       setLoading(false);
@@ -121,7 +123,8 @@ export default function DashboardPage() {
   if (!shop) return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-4 text-center">
       <p className="text-red-400 font-medium">No shop found for your email</p>
-      <p className="text-slate-400 text-xs mt-2">Make sure your email matches the <code className="bg-slate-700 px-1 rounded">owner_email</code> in the shops table.</p>
+      <p className="text-slate-300 text-sm mt-2">Logged in as: <span className="font-mono bg-slate-700 px-2 py-0.5 rounded">{session?.user?.email}</span></p>
+      <p className="text-slate-400 text-xs mt-2">Check that this email matches the <code className="bg-slate-700 px-1 rounded">owner_email</code> in your Supabase <code className="bg-slate-700 px-1 rounded">shops</code> table.</p>
       <button onClick={handleSignOut} className="mt-4 text-sm text-blue-400 underline">Sign out</button>
     </div>
   );
