@@ -21,6 +21,7 @@ function DashboardContent() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [paymentInfo, setPaymentInfo] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -203,6 +204,22 @@ function DashboardContent() {
           className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl tracking-wider transition disabled:opacity-50">
           {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Pricing'}
         </button>
+
+        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Embed Widget</h2>
+          <p className="text-xs text-slate-400">Copy this iframe code and paste it into your website to show the booking widget.</p>
+          <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono break-all select-all border border-slate-700">
+            {`<iframe src="${typeof window !== 'undefined' ? window.location.origin : ''}/embed/quote?shop_id=${shop.id}" width="100%" height="700" frameborder="0"></iframe>`}
+          </div>
+          <button onClick={() => {
+            navigator.clipboard.writeText(`<iframe src="${window.location.origin}/embed/quote?shop_id=${shop.id}" width="100%" height="700" frameborder="0"></iframe>`);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition">
+            {copied ? 'Copied!' : 'Copy Embed Code'}
+          </button>
+        </section>
 
         <section className="bg-slate-800 rounded-xl p-5 space-y-3">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Bookings</h2>

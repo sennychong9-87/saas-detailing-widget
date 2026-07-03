@@ -94,7 +94,7 @@ INSERT INTO shops (id, business_name, owner_email, base_sedan_price, base_suv_pr
 VALUES (
   '4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
   'Premium Detailing Co.',
-  'you@email.com',
+  'touthangj38@gmail.com',
   150, 200, 250, false,
   'UPI: premium@upi'
 )
