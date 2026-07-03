@@ -10,6 +10,8 @@ export default function AddShopPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
 
+  const adminEmail = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_EMAIL : null;
+
   const [session, setSession] = useState(null);
   const [businessName, setBusinessName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
@@ -70,6 +72,16 @@ export default function AddShopPage() {
   }
 
   if (!session) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-400 text-sm">Loading...</div>;
+
+  if (adminEmail && session.user.email !== adminEmail) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-4 text-center">
+        <p className="text-red-400 font-medium">Access denied</p>
+        <p className="text-slate-400 text-xs mt-2">Only the admin can add shops.</p>
+        <button onClick={() => router.push('/dashboard')} className="mt-4 text-sm text-blue-400 underline">Back to Dashboard</button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
