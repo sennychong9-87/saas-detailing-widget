@@ -24,7 +24,7 @@ export async function POST(request) {
       amount: Math.round(amount * 100),
       currency: 'usd',
       metadata: { booking_id: bookingId, shop_id: shopId },
-      transfer_data: { destination: shop.stripe_account_id },
+      on_behalf_of: shop.stripe_account_id,
       application_fee_amount: 0,
     })
 

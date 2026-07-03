@@ -20,10 +20,9 @@ export async function POST(request) {
 
     if (!accountId) {
       const account = await stripe.accounts.create({
-        type: 'express',
+        type: 'standard',
         business_type: 'individual',
         business_profile: { name: shop?.business_name || 'Detailing Shop' },
-        capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
       })
       accountId = account.id
       await supabase.from('shops').update({ stripe_account_id: accountId }).eq('id', shopId)
