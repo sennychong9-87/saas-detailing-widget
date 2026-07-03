@@ -1,15 +1,16 @@
 -- Run this in your Supabase SQL Editor (https://supabase.com/dashboard/project/uyzsuvfjcypkmfohnkwn/sql/new)
 
--- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
 -- Table: shops
--- owner_email links a Supabase Auth user to this shop
 -- ============================================
 CREATE TABLE IF NOT EXISTS shops (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   business_name TEXT NOT NULL,
+  owner_email TEXT,
+  stripe_account_id TEXT,
+  stripe_onboarding_complete BOOLEAN DEFAULT false,
   base_sedan_price NUMERIC NOT NULL DEFAULT 150,
   base_suv_price NUMERIC NOT NULL DEFAULT 200,
   base_truck_price NUMERIC NOT NULL DEFAULT 250,
@@ -17,12 +18,12 @@ CREATE TABLE IF NOT EXISTS shops (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add owner_email column if missing (for existing tables)
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS owner_email TEXT;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_account_id TEXT;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_onboarding_complete BOOLEAN DEFAULT false;
 
 -- ============================================
 -- Table: pricing_rules
--- Condition modifiers per shop (interior/exterior)
 -- ============================================
 CREATE TABLE IF NOT EXISTS pricing_rules (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -46,39 +47,58 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 -- ============================================
--- Table: quotes
+-- Table: quotes (bookings)
+-- booking_id is a human-readable code like DW-XXXXXX
 -- ============================================
 CREATE TABLE IF NOT EXISTS quotes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   shop_id UUID REFERENCES shops(id) ON DELETE CASCADE,
   customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
+  booking_id TEXT UNIQUE,
   vehicle_size TEXT NOT NULL,
   interior_condition TEXT NOT NULL,
   exterior_condition TEXT NOT NULL,
   estimated_total_price NUMERIC NOT NULL,
   deposit_required_amount NUMERIC NOT NULL,
+  stripe_payment_intent_id TEXT,
+  payment_status TEXT DEFAULT 'pending',
   status TEXT NOT NULL DEFAULT 'pending',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================
--- Seed: Insert a demo shop with the default UUID
--- IMPORTANT: Change 'you@email.com' to YOUR email address so you can access the dashboard
+-- Table: inspections
+-- ============================================
+CREATE TABLE IF NOT EXISTS inspections (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  booking_id TEXT NOT NULL REFERENCES quotes(booking_id) ON DELETE CASCADE,
+  front_image TEXT,
+  rear_image TEXT,
+  driver_image TEXT,
+  passenger_image TEXT,
+  roof_image TEXT,
+  notes TEXT,
+  completed_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(booking_id)
+);
+
+-- ============================================
+-- Seed: demo shop
 -- ============================================
 INSERT INTO shops (id, business_name, owner_email, base_sedan_price, base_suv_price, base_truck_price, is_weekend_pricing_active)
 VALUES (
   '4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
   'Premium Detailing Co.',
-  'joshua.touthang.87@email.com',
-  150,
-  200,
-  250,
-  false
+  'you@email.com',
+  150, 200, 250, false
 )
-ON CONFLICT (id) DO UPDATE SET owner_email = EXCLUDED.owner_email;
+ON CONFLICT (id) DO UPDATE SET
+  owner_email = EXCLUDED.owner_email,
+  stripe_account_id = COALESCE(EXCLUDED.stripe_account_id, shops.stripe_account_id),
+  stripe_onboarding_complete = COALESCE(EXCLUDED.stripe_onboarding_complete, shops.stripe_onboarding_complete);
 
 -- ============================================
--- Seed: Pricing rules for demo shop
+-- Seed: Pricing rules
 -- ============================================
 INSERT INTO pricing_rules (shop_id, category, option_name, price_adjustment) VALUES
   ('4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d', 'interior_condition', 'clean',    0),
@@ -90,14 +110,14 @@ INSERT INTO pricing_rules (shop_id, category, option_name, price_adjustment) VAL
 ON CONFLICT (shop_id, category, option_name) DO NOTHING;
 
 -- ============================================
--- RLS: Row-level security
+-- RLS
 -- ============================================
 ALTER TABLE shops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pricing_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inspections ENABLE ROW LEVEL SECURITY;
 
--- Shops: anyone can read, only owner (by email) can update
 DROP POLICY IF EXISTS "anon_can_read_shops" ON shops;
 CREATE POLICY "anon_can_read_shops" ON shops FOR SELECT USING (true);
 
@@ -106,7 +126,6 @@ CREATE POLICY "owner_can_update_shops" ON shops FOR UPDATE USING (
   owner_email = auth.jwt() ->> 'email'
 );
 
--- Pricing rules: anyone can read, only owner can manage
 DROP POLICY IF EXISTS "anon_can_read_pricing" ON pricing_rules;
 CREATE POLICY "anon_can_read_pricing" ON pricing_rules FOR SELECT USING (true);
 
@@ -115,9 +134,14 @@ CREATE POLICY "owner_can_manage_pricing" ON pricing_rules FOR ALL USING (
   shop_id IN (SELECT id FROM shops WHERE owner_email = auth.jwt() ->> 'email')
 );
 
--- Customers/Quotes: anonymous insert
 DROP POLICY IF EXISTS "anon_can_insert_customers" ON customers;
 CREATE POLICY "anon_can_insert_customers" ON customers FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "anon_can_insert_quotes" ON quotes;
 CREATE POLICY "anon_can_insert_quotes" ON quotes FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "anon_can_select_quotes" ON quotes;
+CREATE POLICY "anon_can_select_quotes" ON quotes FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "anon_can_manage_inspections" ON inspections;
+CREATE POLICY "anon_can_manage_inspections" ON inspections FOR ALL USING (true);

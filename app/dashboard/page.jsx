@@ -1,13 +1,14 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const VEHICLE_SIZES = ['sedan', 'suv', 'truck'];
 const CONDITIONS = ['clean', 'dirty', 'disaster'];
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -16,9 +17,12 @@ export default function DashboardPage() {
   const [session, setSession] = useState(null);
   const [shop, setShop] = useState(null);
   const [pricingRules, setPricingRules] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeMsg, setStripeMsg] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -32,30 +36,54 @@ export default function DashboardPage() {
     loadData();
   }, [session]);
 
+  useEffect(() => {
+    const stripeStatus = searchParams.get('stripe');
+    if (stripeStatus === 'success') setStripeMsg('Stripe account connected successfully!');
+    if (stripeStatus === 'refresh') setStripeMsg('Stripe onboarding was interrupted. Try again.');
+  }, [searchParams]);
+
   async function loadData() {
     const email = session.user.email;
 
-    const { data: shopData, error: shopErr } = await supabase
+    const { data: shopData } = await supabase
       .from('shops')
       .select('*')
       .eq('owner_email', email)
       .single();
-
-    if (shopErr) console.error('Shop fetch error:', shopErr);
 
     if (!shopData) {
       setLoading(false);
       return;
     }
 
-    const { data: rulesData } = await supabase
-      .from('pricing_rules')
-      .select('*')
-      .eq('shop_id', shopData.id);
+    const [rulesRes, bookingsRes] = await Promise.all([
+      supabase.from('pricing_rules').select('*').eq('shop_id', shopData.id),
+      supabase.from('quotes').select('*, customers(*)').eq('shop_id', shopData.id).order('created_at', { ascending: false }).limit(20),
+    ]);
 
     setShop(shopData);
-    setPricingRules(rulesData || []);
+    setPricingRules(rulesRes.data || []);
+    setBookings(bookingsRes.data || []);
     setLoading(false);
+  }
+
+  async function connectStripe() {
+    setStripeLoading(true);
+    setStripeMsg(null);
+
+    const res = await fetch('/api/stripe/create-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shopId: shop.id,
+        returnUrl: window.location.origin + '/dashboard',
+      }),
+    });
+
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else setStripeMsg('Error: ' + (data.error || 'Failed to create Stripe account'));
+    setStripeLoading(false);
   }
 
   function getRule(category, optionName) {
@@ -132,11 +160,30 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <header className="border-b border-slate-700 px-6 py-3 flex items-center justify-between">
-        <h1 className="text-sm font-bold tracking-wide">{shop.business_name} — Pricing</h1>
+        <h1 className="text-sm font-bold tracking-wide">{shop.business_name}</h1>
         <button onClick={handleSignOut} className="text-xs text-slate-400 hover:text-white transition">Sign out</button>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+        {stripeMsg && (
+          <div className={`p-3 rounded-xl text-xs ${stripeMsg.includes('success') ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300'}`}>
+            {stripeMsg}
+          </div>
+        )}
+
+        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stripe Connect</h2>
+          <p className="text-xs text-slate-400">Receive 20% deposits directly to your bank account.</p>
+          {shop.stripe_onboarding_complete ? (
+            <p className="text-xs text-emerald-400 font-medium">Stripe connected ✓</p>
+          ) : (
+            <button onClick={connectStripe} disabled={stripeLoading}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50">
+              {stripeLoading ? 'Connecting...' : shop.stripe_account_id ? 'Complete Stripe Onboarding' : 'Connect Stripe'}
+            </button>
+          )}
+        </section>
+
         <section className="bg-slate-800 rounded-xl p-5 space-y-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Vehicle Base Prices</h2>
           <div className="grid grid-cols-3 gap-3">
@@ -189,7 +236,39 @@ export default function DashboardPage() {
           className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl tracking-wider transition disabled:opacity-50">
           {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Pricing'}
         </button>
+
+        <section className="bg-slate-800 rounded-xl p-5 space-y-3">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Bookings</h2>
+          {bookings.length === 0 ? (
+            <p className="text-xs text-slate-500">No bookings yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {bookings.map(b => (
+                <div key={b.id} className="flex items-center justify-between bg-slate-700/50 rounded-lg px-3 py-2">
+                  <div>
+                    <span className="font-mono text-xs font-bold text-blue-300">{b.booking_id || '—'}</span>
+                    <span className="text-xs text-slate-400 ml-2">{b.customers?.full_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${b.payment_status === 'paid' ? 'bg-emerald-900/50 text-emerald-300' : 'bg-slate-600 text-slate-300'}`}>
+                      {b.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                    </span>
+                    <span className="text-xs text-slate-400">${b.deposit_required_amount}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-400 text-sm">Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }
