@@ -35,24 +35,24 @@ export default function DashboardPage() {
   async function loadData() {
     const email = session.user.email;
 
-    const { data: owner } = await supabase
-      .from('shop_owners')
-      .select('shop_id')
-      .eq('email', email)
+    const { data: shopData } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('owner_email', email)
       .single();
 
-    if (!owner) {
+    if (!shopData) {
       setLoading(false);
       return;
     }
 
-    const [shopRes, rulesRes] = await Promise.all([
-      supabase.from('shops').select('*').eq('id', owner.shop_id).single(),
-      supabase.from('pricing_rules').select('*').eq('shop_id', owner.shop_id),
-    ]);
+    const { data: rulesData } = await supabase
+      .from('pricing_rules')
+      .select('*')
+      .eq('shop_id', shopData.id);
 
-    setShop(shopRes.data);
-    setPricingRules(rulesRes.data || []);
+    setShop(shopData);
+    setPricingRules(rulesData || []);
     setLoading(false);
   }
 
@@ -120,8 +120,8 @@ export default function DashboardPage() {
 
   if (!shop) return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-4 text-center">
-      <p className="text-red-400 font-medium">No shop linked to this account</p>
-      <p className="text-slate-400 text-xs mt-2">Contact admin to link your email to a shop.</p>
+      <p className="text-red-400 font-medium">No shop found for your email</p>
+      <p className="text-slate-400 text-xs mt-2">Make sure your email matches the <code className="bg-slate-700 px-1 rounded">owner_email</code> in the shops table.</p>
       <button onClick={handleSignOut} className="mt-4 text-sm text-blue-400 underline">Sign out</button>
     </div>
   );
