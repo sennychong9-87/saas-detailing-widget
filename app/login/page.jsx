@@ -1,14 +1,19 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [mode, setMode] = useState('login');
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'signup') setMode('signup');
+  }, [searchParams]);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -55,5 +60,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-400 text-sm">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
