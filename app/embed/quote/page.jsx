@@ -272,6 +272,30 @@ function WidgetForm() {
     }
   };
 
+  async function sendNotification() {
+    if (!shopConfig?.email_notifications && !shopConfig?.owner_email) return;
+    try {
+      await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shopEmail: shopConfig.owner_email,
+          shopName: shopConfig.business_name,
+          bookingId,
+          customerName: fullName,
+          appointmentDate,
+          appointmentTime,
+          deposit: priceCalculations.deposit,
+          customerEmail: email,
+          customerPhone: phone,
+          vehicleSize,
+          interiorCondition,
+          exteriorCondition,
+        }),
+      });
+    } catch (e) { /* notification is best-effort */ }
+  }
+
   if (loading) return <div className="p-8 text-center text-sm text-slate-400 animate-pulse">Initializing Data Parameters...</div>;
   if (!shopConfig) return (
     <div className="p-8 text-center">
@@ -316,7 +340,7 @@ function WidgetForm() {
               <PaymentForm
                 bookingId={bookingId} amount={priceCalculations.deposit} clientSecret={clientSecret}
                 onComplete={() => {
-                  supabase.from('quotes').update({ payment_status: 'paid', final_status: 'booked' }).eq('booking_id', bookingId).then();
+                  supabase.from('quotes').update({ payment_status: 'paid', final_status: 'booked' }).eq('booking_id', bookingId).then(() => sendNotification());
                   setBookingState('confirmed');
                 }}
               />
@@ -329,7 +353,7 @@ function WidgetForm() {
               className="block w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl tracking-wider uppercase text-center shadow-md transition">
               Pay $${priceCalculations.deposit} with Card
             </a>
-            <button onClick={() => { supabase.from('quotes').update({ final_status: 'booked' }).eq('booking_id', bookingId).then(); setBookingState('confirmed'); }}
+            <button onClick={() => { supabase.from('quotes').update({ final_status: 'booked' }).eq('booking_id', bookingId).then(() => sendNotification()); setBookingState('confirmed'); }}
               className="w-full py-2 border border-slate-200 text-slate-500 text-xs font-medium rounded-xl hover:bg-slate-50 transition">
               I've paid — confirm booking
             </button>
@@ -341,7 +365,7 @@ function WidgetForm() {
                 Send the deposit via: <span className="font-bold text-blue-700">{shopConfig.payment_info}</span>
               </p>
             )}
-            <button onClick={() => { supabase.from('quotes').update({ final_status: 'booked' }).eq('booking_id', bookingId).then(); setBookingState('confirmed'); }}
+            <button onClick={() => { supabase.from('quotes').update({ final_status: 'booked' }).eq('booking_id', bookingId).then(() => sendNotification()); setBookingState('confirmed'); }}
               className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl tracking-wider uppercase transition">
               Done — I'll pay the deposit
             </button>

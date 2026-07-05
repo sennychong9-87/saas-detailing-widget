@@ -13,9 +13,10 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
   const [providesProtection, setProvidesProtection] = useState(shop.provides_protection || false);
   const [protectionServices, setProtectionServices] = useState([]);
   const [addonServices, setAddonServices] = useState([]);
+  const [emailNotifications, setEmailNotifications] = useState(shop.email_notifications !== false);
   const [showProtectionSection, setShowProtectionSection] = useState(false);
 
-  useEffect(() => { setStripePaymentLink(shop.stripe_payment_link || ''); setServiceType(shop.service_type || 'detailing'); setProvidesProtection(shop.provides_protection || false); }, [shop]);
+  useEffect(() => { setStripePaymentLink(shop.stripe_payment_link || ''); setServiceType(shop.service_type || 'detailing'); setProvidesProtection(shop.provides_protection || false); setEmailNotifications(shop.email_notifications !== false); }, [shop]);
 
   useEffect(() => {
     supabase.from('protection_services').select('*').eq('shop_id', shop.id).then(({ data }) => { if (data) setProtectionServices(data); });
@@ -89,6 +90,7 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
         base_truck_price: Number(shop.base_truck_price),
         is_weekend_pricing_active: shop.is_weekend_pricing_active,
         stripe_payment_link: stripePaymentLink,
+        email_notifications: emailNotifications,
         service_type: serviceType,
         provides_protection: providesProtection,
       })
@@ -159,6 +161,17 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
           <input type="url" value={stripePaymentLink} onChange={(e) => setStripePaymentLink(e.target.value)}
             placeholder="https://buy.stripe.com/test_xxx"
             className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
+        </section>
+
+        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={emailNotifications} onChange={(e) => { setEmailNotifications(e.target.checked); setSaved(false); }}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-700" />
+            <div>
+              <span className="text-sm font-medium">Email notifications</span>
+              <p className="text-[10px] text-slate-400 mt-0.5">Get an email when a customer confirms a booking — free, no extra cost</p>
+            </div>
+          </label>
         </section>
 
       <section className="bg-slate-800 rounded-xl p-5 space-y-4">
