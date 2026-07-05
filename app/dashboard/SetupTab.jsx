@@ -7,7 +7,7 @@ const CONDITIONS = ['clean', 'dirty', 'disaster'];
 export default function SetupTab({ supabase, shop, setShop, pricingRules, setPricingRules, session, onShopUpdate }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState(shop.payment_info || '');
+  const [stripePaymentLink, setStripePaymentLink] = useState(shop.stripe_payment_link || '');
   const [copied, setCopied] = useState(false);
   const [serviceType, setServiceType] = useState(shop.service_type || 'detailing');
   const [providesProtection, setProvidesProtection] = useState(shop.provides_protection || false);
@@ -15,7 +15,7 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
   const [addonServices, setAddonServices] = useState([]);
   const [showProtectionSection, setShowProtectionSection] = useState(false);
 
-  useEffect(() => { setPaymentInfo(shop.payment_info || ''); setServiceType(shop.service_type || 'detailing'); setProvidesProtection(shop.provides_protection || false); }, [shop]);
+  useEffect(() => { setStripePaymentLink(shop.stripe_payment_link || ''); setServiceType(shop.service_type || 'detailing'); setProvidesProtection(shop.provides_protection || false); }, [shop]);
 
   useEffect(() => {
     supabase.from('protection_services').select('*').eq('shop_id', shop.id).then(({ data }) => { if (data) setProtectionServices(data); });
@@ -88,7 +88,7 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
         base_suv_price: Number(shop.base_suv_price),
         base_truck_price: Number(shop.base_truck_price),
         is_weekend_pricing_active: shop.is_weekend_pricing_active,
-        payment_info: paymentInfo,
+        stripe_payment_link: stripePaymentLink,
         service_type: serviceType,
         provides_protection: providesProtection,
       })
@@ -153,13 +153,13 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
         </div>
       </section>
 
-      <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Info</h2>
-        <p className="text-xs text-slate-400">Share your UPI ID, payment link, or instructions for customers to pay the 20% deposit.</p>
-        <input type="text" value={paymentInfo} onChange={(e) => setPaymentInfo(e.target.value)}
-          placeholder="e.g. UPI: detailer@upi or https://razorpay.me/yourlink"
-          className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
-      </section>
+        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stripe Payment Link</h2>
+          <p className="text-xs text-slate-400">Create a <a href="https://dashboard.stripe.com/payment-links" target="_blank" rel="noreferrer" className="text-blue-400 underline">Stripe Payment Link</a> in your Stripe dashboard, then paste the URL here. Customers will pay by card inside Stripe's secure checkout — funds go directly to you.</p>
+          <input type="url" value={stripePaymentLink} onChange={(e) => setStripePaymentLink(e.target.value)}
+            placeholder="https://buy.stripe.com/test_xxx"
+            className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
+        </section>
 
       <section className="bg-slate-800 rounded-xl p-5 space-y-4">
         <button onClick={() => setShowProtectionSection(!showProtectionSection)}

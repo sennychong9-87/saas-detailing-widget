@@ -322,6 +322,18 @@ function WidgetForm() {
               />
             </Elements>
           </div>
+        ) : shopConfig.stripe_payment_link ? (
+          <div className="border-t border-slate-100 pt-4 mt-3 space-y-3">
+            <p className="text-xs text-slate-500 text-center">Secure your appointment by paying the 20% deposit.</p>
+            <a href={shopConfig.stripe_payment_link} target="_blank" rel="noreferrer"
+              className="block w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl tracking-wider uppercase text-center shadow-md transition">
+              Pay $${priceCalculations.deposit} with Card
+            </a>
+            <button onClick={() => { supabase.from('quotes').update({ final_status: 'booked' }).eq('booking_id', bookingId).then(); setBookingState('confirmed'); }}
+              className="w-full py-2 border border-slate-200 text-slate-500 text-xs font-medium rounded-xl hover:bg-slate-50 transition">
+              I've paid — confirm booking
+            </button>
+          </div>
         ) : (
           <div className="border-t border-slate-100 pt-4 mt-2 space-y-3">
             {shopConfig.payment_info && (
