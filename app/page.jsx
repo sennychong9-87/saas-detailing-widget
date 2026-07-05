@@ -34,19 +34,15 @@ export default function LandingPage() {
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 space-y-3">
             <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">✓</div>
             <h3 className="text-sm font-bold text-center">Everything You Need to Run Your Detailing Business</h3>
-            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5">
+            <ul className="text-sm text-slate-400 leading-relaxed space-y-1.5">
               <li>✓ Set your own pricing — base prices &amp; condition modifiers</li>
-              <li>✓ Paint protection &amp; ceramic coating pricing</li>
-              <li>✓ Add-on services with custom pricing</li>
               <li>✓ Offer detailing, protection, or both</li>
-              <li>✓ Weekend surcharge (15%)</li>
               <li>✓ Collect 20% deposits by card via Stripe — funds go directly to you</li>
               <li>✓ Set your schedule: hours, days off, number of bays, job times</li>
               <li>✓ Customers pick from real-time available slots</li>
               <li>✓ Calendar-based service status with check-in flow</li>
               <li>✓ Walk-around inspection with 5-side photo capture</li>
               <li>✓ Preview your widget before sharing</li>
-              <li>✓ One-click embed code for your website</li>
             </ul>
           </div>
         </div>
