@@ -2,9 +2,17 @@
 import { Suspense, useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
+import SetupTab from './SetupTab';
+import PreviewTab from './PreviewTab';
+import ScheduleTab from './ScheduleTab';
+import StatusTab from './StatusTab';
 
-const VEHICLE_SIZES = ['sedan', 'suv', 'truck'];
-const CONDITIONS = ['clean', 'dirty', 'disaster'];
+const TABS = [
+  { key: 'setup', label: 'Set Up' },
+  { key: 'preview', label: 'Preview' },
+  { key: 'schedule', label: 'Schedule Setter' },
+  { key: 'status', label: 'Service Status' },
+];
 
 function DashboardContent() {
   const router = useRouter();
@@ -16,12 +24,8 @@ function DashboardContent() {
   const [session, setSession] = useState(null);
   const [shop, setShop] = useState(null);
   const [pricingRules, setPricingRules] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [paymentInfo, setPaymentInfo] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState('setup');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -49,75 +53,14 @@ function DashboardContent() {
       return;
     }
 
-    setPaymentInfo(shopData.payment_info || '');
-
-    const [rulesRes, bookingsRes] = await Promise.all([
-      supabase.from('pricing_rules').select('*').eq('shop_id', shopData.id),
-      supabase.from('quotes').select('*, customers(*)').eq('shop_id', shopData.id).order('created_at', { ascending: false }).limit(20),
-    ]);
+    const { data: rulesData } = await supabase
+      .from('pricing_rules')
+      .select('*')
+      .eq('shop_id', shopData.id);
 
     setShop(shopData);
-    setPricingRules(rulesRes.data || []);
-    setBookings(bookingsRes.data || []);
+    setPricingRules(rulesData || []);
     setLoading(false);
-  }
-
-
-  function getRule(category, optionName) {
-    return pricingRules.find(r => r.category === category && r.option_name === optionName) || { price_adjustment: 0 };
-  }
-
-  function updateShopField(field, value) {
-    setShop(prev => ({ ...prev, [field]: value }));
-    setSaved(false);
-  }
-
-  function updateRule(category, optionName, value) {
-    setPricingRules(prev => {
-      const idx = prev.findIndex(r => r.category === category && r.option_name === optionName);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = { ...updated[idx], price_adjustment: Number(value) };
-        return updated;
-      }
-      return [...prev, { shop_id: shop.id, category, option_name: optionName, price_adjustment: Number(value) }];
-    });
-    setSaved(false);
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    setSaved(false);
-
-    const { error: shopErr } = await supabase
-      .from('shops')
-      .update({
-        business_name: shop.business_name,
-        base_sedan_price: Number(shop.base_sedan_price),
-        base_suv_price: Number(shop.base_suv_price),
-        base_truck_price: Number(shop.base_truck_price),
-        is_weekend_pricing_active: shop.is_weekend_pricing_active,
-        payment_info: paymentInfo,
-      })
-      .eq('id', shop.id);
-
-    if (shopErr) return alert('Failed to save shop prices: ' + shopErr.message);
-
-    for (const rule of pricingRules) {
-      if (rule.id) {
-        await supabase.from('pricing_rules').update({ price_adjustment: Number(rule.price_adjustment) }).eq('id', rule.id);
-      } else {
-        await supabase.from('pricing_rules').insert({
-          shop_id: shop.id,
-          category: rule.category,
-          option_name: rule.option_name,
-          price_adjustment: Number(rule.price_adjustment),
-        });
-      }
-    }
-
-    setSaving(false);
-    setSaved(true);
   }
 
   async function handleSignOut() {
@@ -140,118 +83,33 @@ function DashboardContent() {
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <header className="border-b border-slate-700 px-6 py-3 flex items-center justify-between">
         <h1 className="text-sm font-bold tracking-wide">{shop.business_name}</h1>
-        <button onClick={handleSignOut} className="text-xs text-slate-400 hover:text-white transition">Sign out</button>
+        <div className="flex items-center gap-3">
+          {session.user.email === (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_EMAIL : null) && (
+            <button onClick={() => router.push('/admin/add-shop')} className="text-xs text-slate-400 hover:text-white transition">Add Shop</button>
+          )}
+          <button onClick={handleSignOut} className="text-xs text-slate-400 hover:text-white transition">Sign out</button>
+        </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <div className="border-b border-slate-700 px-6">
+        <div className="max-w-2xl mx-auto flex gap-1">
+          {TABS.map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2.5 text-xs font-bold tracking-wide transition border-b-2 -mb-[1px] ${activeTab === tab.key ? 'text-blue-400 border-blue-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Business Name</h2>
-          <input type="text" value={shop.business_name} onChange={(e) => updateShopField('business_name', e.target.value)}
-            placeholder="Your detailing company name"
-            className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
-        </section>
-
-        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Info</h2>
-          <p className="text-xs text-slate-400">Share your UPI ID, payment link, or instructions for customers to pay the 20% deposit.</p>
-          <input type="text" value={paymentInfo} onChange={(e) => setPaymentInfo(e.target.value)}
-            placeholder="e.g. UPI: detailer@upi or https://razorpay.me/yourlink"
-            className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
-        </section>
-
-        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Vehicle Base Prices</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {VEHICLE_SIZES.map(size => (
-              <div key={size}>
-                <label className="block text-[10px] text-slate-400 uppercase mb-1">{size === 'truck' ? 'Truck/Van' : size}</label>
-                <input type="number" value={shop[`base_${size}_price`]} onChange={(e) => updateShopField(`base_${size}_price`, e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Interior Condition Modifiers</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {CONDITIONS.map(cond => (
-              <div key={cond}>
-                <label className="block text-[10px] text-slate-400 uppercase mb-1">{cond}</label>
-                <input type="number" value={getRule('interior_condition', cond).price_adjustment} onChange={(e) => updateRule('interior_condition', cond, e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Exterior Condition Modifiers</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {CONDITIONS.map(cond => (
-              <div key={cond}>
-                <label className="block text-[10px] text-slate-400 uppercase mb-1">{cond}</label>
-                <input type="number" value={getRule('exterior_condition', cond).price_adjustment} onChange={(e) => updateRule('exterior_condition', cond, e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:border-blue-500" />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Weekend Pricing</h2>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={shop.is_weekend_pricing_active} onChange={(e) => updateShopField('is_weekend_pricing_active', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-700" />
-            <span className="text-sm">Apply 15% surcharge on weekends</span>
-          </label>
-        </section>
-
-        <button onClick={handleSave} disabled={saving}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl tracking-wider transition disabled:opacity-50">
-          {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Pricing'}
-        </button>
-
-        <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Embed Widget</h2>
-          <p className="text-xs text-slate-400">Copy this iframe code and paste it into your website to show the booking widget.</p>
-          <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono break-all select-all border border-slate-700">
-            {`<iframe src="${typeof window !== 'undefined' ? window.location.origin : ''}/embed/quote?shop_id=${shop.id}" width="100%" height="700" frameborder="0"></iframe>`}
-          </div>
-          <button onClick={() => {
-            navigator.clipboard.writeText(`<iframe src="${window.location.origin}/embed/quote?shop_id=${shop.id}" width="100%" height="700" frameborder="0"></iframe>`);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-          }}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition">
-            {copied ? 'Copied!' : 'Copy Embed Code'}
-          </button>
-        </section>
-
-        <section className="bg-slate-800 rounded-xl p-5 space-y-3">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Bookings</h2>
-          {bookings.length === 0 ? (
-            <p className="text-xs text-slate-500">No bookings yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {bookings.map(b => (
-                <div key={b.id} className="flex items-center justify-between bg-slate-700/50 rounded-lg px-3 py-2">
-                  <div>
-                    <span className="font-mono text-xs font-bold text-blue-300">{b.booking_id || '—'}</span>
-                    <span className="text-xs text-slate-400 ml-2">{b.customers?.full_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${b.payment_status === 'paid' ? 'bg-emerald-900/50 text-emerald-300' : 'bg-slate-600 text-slate-300'}`}>
-                      {b.payment_status === 'paid' ? 'Paid' : 'Pending'}
-                    </span>
-                    <span className="text-xs text-slate-400">${b.deposit_required_amount}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        {activeTab === 'setup' && (
+          <SetupTab supabase={supabase} shop={shop} setShop={setShop}
+            pricingRules={pricingRules} setPricingRules={setPricingRules} session={session} />
+        )}
+        {activeTab === 'preview' && <PreviewTab shop={shop} />}
+        {activeTab === 'schedule' && <ScheduleTab supabase={supabase} shop={shop} />}
+        {activeTab === 'status' && <StatusTab supabase={supabase} shop={shop} />}
       </main>
     </div>
   );
