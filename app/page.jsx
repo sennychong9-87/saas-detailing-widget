@@ -34,17 +34,42 @@ export default function LandingPage() {
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 text-center space-y-3">
             <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">1</div>
             <h3 className="text-sm font-bold">For Detailers</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Set your own prices, connect your payment method, and embed the booking widget on your site. Customers pay you directly — no middleman.</p>
+            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5 text-left">
+              <li>✓ Set base prices &amp; condition modifiers (sedan/SUV/truck)</li>
+              <li>✓ Paint protection &amp; ceramic coating pricing</li>
+              <li>✓ Add-on services with custom pricing</li>
+              <li>✓ Toggle detailing / protection / both</li>
+              <li>✓ Weekend surcharge (15%)</li>
+              <li>✓ Stripe Payment Link — collect deposits by card</li>
+              <li>✓ Schedule setter: hours, days, bays, job time estimates</li>
+              <li>✓ Calendar-based service status with check-in flow</li>
+              <li>✓ Widget preview &amp; one-click embed code</li>
+              <li>✓ Walk-around inspection (5-side photo capture)</li>
+            </ul>
           </div>
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 text-center space-y-3">
             <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">2</div>
             <h3 className="text-sm font-bold">For Car Owners</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Get an instant quote, pay a 20% deposit, and complete a 5-side walk-around inspection. Your booking ID locks everything in.</p>
+            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5 text-left">
+              <li>✓ Instant quote with live price breakdown</li>
+              <li>✓ Pick appointment date &amp; available time slot</li>
+              <li>✓ Pay 20% deposit by card via secure Stripe checkout</li>
+              <li>✓ Get a unique booking ID (DW-XXXXXX)</li>
+              <li>✓ Walk-around inspection on service day</li>
+              <li>✓ Add protection services &amp; extras</li>
+            </ul>
           </div>
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 text-center space-y-3">
             <div className="w-10 h-10 bg-purple-500/10 text-purple-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">3</div>
             <h3 className="text-sm font-bold">For Platform Owners</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Run the entire system on Supabase. No payment handling during beta — monetize later with Paddle subscriptions.</p>
+            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5 text-left">
+              <li>✓ Supabase backend with RLS security</li>
+              <li>✓ Admin panel to add/manage detailers</li>
+              <li>✓ No money handling — payments go direct to detailer</li>
+              <li>✓ Stripe Connect &amp; Payment Link ready</li>
+              <li>✓ Monetize later with Paddle subscriptions</li>
+              <li>✓ Deploy on Vercel in minutes</li>
+            </ul>
           </div>
         </div>
 
