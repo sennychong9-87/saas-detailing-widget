@@ -30,56 +30,31 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="mt-24 grid sm:grid-cols-3 gap-6">
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 text-center space-y-3">
-            <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">1</div>
-            <h3 className="text-sm font-bold">For Detailers</h3>
-            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5 text-left">
-              <li>✓ Set base prices &amp; condition modifiers (sedan/SUV/truck)</li>
+        <div className="mt-24 max-w-lg mx-auto">
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 space-y-3">
+            <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">✓</div>
+            <h3 className="text-sm font-bold text-center">Everything You Need to Run Your Detailing Business</h3>
+            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5">
+              <li>✓ Set your own pricing — base prices &amp; condition modifiers</li>
               <li>✓ Paint protection &amp; ceramic coating pricing</li>
               <li>✓ Add-on services with custom pricing</li>
-              <li>✓ Toggle detailing / protection / both</li>
+              <li>✓ Offer detailing, protection, or both</li>
               <li>✓ Weekend surcharge (15%)</li>
-              <li>✓ Stripe Payment Link — collect deposits by card</li>
-              <li>✓ Schedule setter: hours, days, bays, job time estimates</li>
+              <li>✓ Collect 20% deposits by card via Stripe — funds go directly to you</li>
+              <li>✓ Set your schedule: hours, days off, number of bays, job times</li>
+              <li>✓ Customers pick from real-time available slots</li>
               <li>✓ Calendar-based service status with check-in flow</li>
-              <li>✓ Widget preview &amp; one-click embed code</li>
-              <li>✓ Walk-around inspection (5-side photo capture)</li>
-            </ul>
-          </div>
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 text-center space-y-3">
-            <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">2</div>
-            <h3 className="text-sm font-bold">For Car Owners</h3>
-            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5 text-left">
-              <li>✓ Instant quote with live price breakdown</li>
-              <li>✓ Pick appointment date &amp; available time slot</li>
-              <li>✓ Pay 20% deposit by card via secure Stripe checkout</li>
-              <li>✓ Get a unique booking ID (DW-XXXXXX)</li>
-              <li>✓ Walk-around inspection on service day</li>
-              <li>✓ Add protection services &amp; extras</li>
-            </ul>
-          </div>
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 text-center space-y-3">
-            <div className="w-10 h-10 bg-purple-500/10 text-purple-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">3</div>
-            <h3 className="text-sm font-bold">For Platform Owners</h3>
-            <ul className="text-xs text-slate-400 leading-relaxed space-y-1.5 text-left">
-              <li>✓ Supabase backend with RLS security</li>
-              <li>✓ Admin panel to add/manage detailers</li>
-              <li>✓ No money handling — payments go direct to detailer</li>
-              <li>✓ Stripe Connect &amp; Payment Link ready</li>
-              <li>✓ Monetize later with Paddle subscriptions</li>
-              <li>✓ Deploy on Vercel in minutes</li>
+              <li>✓ Walk-around inspection with 5-side photo capture</li>
+              <li>✓ Preview your widget before sharing</li>
+              <li>✓ One-click embed code for your website</li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-20 text-center">
-          <h2 className="text-lg font-bold mb-6">Ready to deploy your own instance?</h2>
-          <a href="https://vercel.com/new" target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-2 bg-white text-slate-900 hover:bg-slate-100 px-6 py-3 rounded-xl text-sm font-bold transition shadow-lg">
-            <svg viewBox="0 0 284 65" className="h-4 w-auto fill-current"><path d="M141.68 16.25c-11.04 0-19 7.2-19 18s8.96 18 20 18c6.67 0 12.55-2.64 16.19-7.09l-7.65-4.42c-2.02 2.21-5.09 3.5-8.54 3.5-4.79 0-8.86-2.5-10.37-6.5h28.02c.22-1.12.35-2.28.35-3.5 0-10.79-7.96-17.99-19-17.99zm-9.46 14.5c1.25-3.99 4.67-6.5 9.46-6.5 4.79 0 8.21 2.51 9.46 6.5h-18.92zm117.14-14.5c-11.04 0-19 7.2-19 18s8.96 18 20 18c6.67 0 12.55-2.64 16.19-7.09l-7.65-4.42c-2.02 2.21-5.09 3.5-8.54 3.5-4.79 0-8.86-2.5-10.37-6.5h28.02c.22-1.12.35-2.28.35-3.5 0-10.79-7.96-17.99-19-17.99zm-9.45 14.5c1.25-3.99 4.67-6.5 9.45-6.5 4.79 0 8.21 2.51 9.46 6.5h-18.91zm-39.03 3.5c0 6 3.92 10 10 10 4.12 0 7.21-1.87 8.8-4.92l7.68 4.43c-3.18 5.3-9.14 8.49-16.48 8.49-11.05 0-19-7.2-19-18s7.96-18 19-18c7.34 0 13.29 3.19 16.48 8.49l-7.68 4.43c-1.59-3.05-4.68-4.92-8.8-4.92-6.07 0-10 4-10 10zm82.48-29v46h-9v-46h9zM37.59.25l36.95 64H.64l36.95-64zm92.38 5l-27.71 48-27.71-48h10.39l17.32 30 17.32-30h10.39zm58.91 12v9.69c-1-.29-2.06-.49-3.2-.49-5.81 0-10 4-10 10v14.8h-9v-34h9v9.2c0 5.08 5.91 9.2 13.2 9.2z"/></svg>
-            Deploy via Vercel
-          </a>
+        <div className="mt-16 text-center">
+          <Link href="/login?mode=signup" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold tracking-wide transition shadow-lg shadow-blue-600/20">
+            Get Started — It&apos;s Free
+          </Link>
         </div>
       </main>
 
