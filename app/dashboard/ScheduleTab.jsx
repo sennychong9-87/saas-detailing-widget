@@ -142,10 +142,10 @@ export default function ScheduleTab({ supabase, shop }) {
             <div className="grid grid-cols-3 gap-2">
               {CONDITIONS.map(ic => (
                 <div key={ic} className="space-y-1">
-                  <p className="text-[10px] text-slate-500 uppercase">Int: {ic}</p>
+                  <p className="text-xs text-slate-500 uppercase">Int: {ic}</p>
                   {CONDITIONS.map(ec => (
                     <div key={ec} className="flex items-center gap-1">
-                      <span className="text-[10px] text-slate-500 w-14">Ext: {ec}</span>
+                      <span className="text-xs text-slate-500 w-14">Ext: {ec}</span>
                       <input type="number" min="15" step="5" value={timeEstimates[`${vs}-${ic}-${ec}`] || ''}
                         onChange={(e) => updateEstimate(vs, ic, ec, e.target.value)}
                         className="w-16 px-2 py-1 text-xs bg-slate-700 border border-slate-600 rounded-lg" />
