@@ -10,6 +10,9 @@ const SIDES = [
   { key: 'roof_image', label: 'Roof' },
 ];
 
+const SIZES = ['sedan', 'suv', 'truck'];
+const CONDITIONS = ['clean', 'dirty', 'disaster'];
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -25,6 +28,10 @@ export default function InspectPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
+  const [actualSize, setActualSize] = useState('');
+  const [actualInterior, setActualInterior] = useState('');
+  const [actualExterior, setActualExterior] = useState('');
+  const [adjustmentNote, setAdjustmentNote] = useState('');
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -38,6 +45,9 @@ export default function InspectPage() {
 
     if (error || !data) return setError('Booking not found');
     setBooking(data);
+    setActualSize(data.vehicle_size);
+    setActualInterior(data.interior_condition);
+    setActualExterior(data.exterior_condition);
   }
 
   const startCamera = useCallback(async () => {
@@ -63,15 +73,8 @@ export default function InspectPage() {
     setCaptured(prev => ({ ...prev, [SIDES[currentStep].key]: dataUrl }));
   }
 
-  function nextSide() {
-    stopCamera();
-    if (currentStep < SIDES.length - 1) setCurrentStep(c => c + 1);
-  }
-
-  function prevSide() {
-    stopCamera();
-    if (currentStep > 0) setCurrentStep(c => c - 1);
-  }
+  function nextSide() { stopCamera(); if (currentStep < SIDES.length - 1) setCurrentStep(c => c + 1); }
+  function prevSide() { stopCamera(); if (currentStep > 0) setCurrentStep(c => c - 1); }
 
   async function submitInspection() {
     setSubmitting(true);
@@ -83,7 +86,7 @@ export default function InspectPage() {
       if (!dataUrl) continue;
       const blob = await fetch(dataUrl).then(r => r.blob());
       const path = `${bookingId}/${side.key}.jpg`;
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('inspection-images')
         .upload(path, blob, { upsert: true });
 
@@ -93,32 +96,26 @@ export default function InspectPage() {
         return;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('inspection-images')
-        .getPublicUrl(path);
-
+      const { data: { publicUrl } } = supabase.storage.from('inspection-images').getPublicUrl(path);
       images[side.key] = publicUrl;
     }
 
-    const { error: insError } = await supabase
-      .from('inspections')
-      .insert([{ booking_id: bookingId, ...images }]);
+    const { error: insError } = await supabase.from('inspections').insert([{ booking_id: bookingId, ...images }]);
+    if (insError) { setError('Failed to save inspection: ' + insError.message); setSubmitting(false); return; }
 
-    if (insError) {
-      setError('Failed to save inspection: ' + insError.message);
-      setSubmitting(false);
-      return;
+    const conditionChanged = actualSize !== booking.vehicle_size || actualInterior !== booking.interior_condition || actualExterior !== booking.exterior_condition;
+    if (conditionChanged || adjustmentNote) {
+      await supabase.from('quotes').update({
+        actual_vehicle_size: actualSize,
+        actual_interior_condition: actualInterior,
+        actual_exterior_condition: actualExterior,
+        price_adjustment_note: adjustmentNote,
+      }).eq('booking_id', bookingId);
     }
 
     setSubmitting(false);
     setDone(true);
     stopCamera();
-  }
-
-  function retake(sideKey) {
-    const idx = SIDES.findIndex(s => s.key === sideKey);
-    setCurrentStep(idx);
-    setCameraActive(false);
   }
 
   if (done) return (
@@ -152,7 +149,29 @@ export default function InspectPage() {
         <div className="text-center mb-4">
           <p className="text-[10px] text-slate-400 uppercase tracking-wider">Booking</p>
           <p className="text-sm font-mono font-bold text-slate-900">{bookingId}</p>
-          <p className="text-xs text-slate-500 mt-1">{booking.customers?.full_name} — {booking.vehicle_size}</p>
+          <p className="text-xs text-slate-500 mt-1">{booking.customers?.full_name} — {booking.customers?.phone}</p>
+        </div>
+
+        <div className="bg-slate-50 rounded-xl p-3 space-y-1 text-xs mb-4">
+          <p className="text-[10px] font-bold text-slate-500 uppercase">Booked: {booking.vehicle_size} · Int: {booking.interior_condition} · Ext: {booking.exterior_condition}</p>
+          <p className="text-[10px] text-slate-400">Verify actual condition below if different from booked.</p>
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <select value={actualSize} onChange={e => setActualSize(e.target.value)}
+              className="text-[10px] px-1.5 py-1 border border-slate-200 rounded bg-white">
+              {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select value={actualInterior} onChange={e => setActualInterior(e.target.value)}
+              className="text-[10px] px-1.5 py-1 border border-slate-200 rounded bg-white">
+              {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={actualExterior} onChange={e => setActualExterior(e.target.value)}
+              className="text-[10px] px-1.5 py-1 border border-slate-200 rounded bg-white">
+              {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <input type="text" placeholder="Price adjustment note (e.g. upgraded to disaster, +$50)"
+            value={adjustmentNote} onChange={e => setAdjustmentNote(e.target.value)}
+            className="w-full mt-1 text-[10px] px-1.5 py-1 border border-slate-200 rounded bg-white" />
         </div>
 
         <div className="flex gap-1 justify-center mb-4">
