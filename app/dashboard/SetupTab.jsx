@@ -15,8 +15,9 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
   const [addonServices, setAddonServices] = useState([]);
   const [emailNotifications, setEmailNotifications] = useState(shop.email_notifications !== false);
   const [showProtectionSection, setShowProtectionSection] = useState(false);
+  const [shopSlug, setShopSlug] = useState(shop.shop_slug || '');
 
-  useEffect(() => { setStripePaymentLink(shop.stripe_payment_link || ''); setServiceType(shop.service_type || 'detailing'); setProvidesProtection(shop.provides_protection || false); setEmailNotifications(shop.email_notifications !== false); }, [shop]);
+  useEffect(() => { setStripePaymentLink(shop.stripe_payment_link || ''); setServiceType(shop.service_type || 'detailing'); setProvidesProtection(shop.provides_protection || false); setEmailNotifications(shop.email_notifications !== false); setShopSlug(shop.shop_slug || ''); }, [shop]);
 
   useEffect(() => {
     supabase.from('protection_services').select('*').eq('shop_id', shop.id).then(({ data }) => { if (data) setProtectionServices(data); });
@@ -81,10 +82,13 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
     setSaving(true);
     setSaved(false);
 
+    const slug = shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'shop';
+
     const { error: shopErr } = await supabase
       .from('shops')
       .update({
         business_name: shop.business_name,
+        shop_slug: slug,
         base_sedan_price: Number(shop.base_sedan_price),
         base_suv_price: Number(shop.base_suv_price),
         base_truck_price: Number(shop.base_truck_price),
@@ -132,6 +136,7 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
 
     setSaving(false);
     setSaved(true);
+    if (slug !== shopSlug) setShopSlug(slug);
   }
 
   return (
@@ -283,15 +288,23 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
       </button>
 
       <section className="bg-slate-800 rounded-xl p-5 space-y-4">
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Generate Shop Link</h2>
-        <p className="text-xs text-slate-400">Your customers can book directly at this URL — no iframe needed.</p>
-        <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono break-all border border-slate-700">
-          {`https://detailershield-${shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-shop'}.vercel.app`}
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Shop Page</h2>
+        <p className="text-xs text-slate-400">Customers book directly at this URL — no iframe needed. Share it anywhere.</p>
+        <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono break-all border border-slate-700 select-all">
+          {`https://detailershield.vercel.app/${shopSlug || 'your-shop'}`}
         </div>
-        <button onClick={() => { navigator.clipboard.writeText(`https://detailershield-${shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-shop'}.vercel.app`); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-          className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition">
-          {copied ? 'Copied!' : 'Copy Shop Link'}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => { navigator.clipboard.writeText(`https://detailershield.vercel.app/${shopSlug || 'your-shop'}`); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+            className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition">
+            {copied ? 'Copied!' : 'Copy Shop Link'}
+          </button>
+          {shopSlug && (
+            <a href={`https://detailershield.vercel.app/${shopSlug}`} target="_blank" rel="noreferrer"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition text-center">
+              Open
+            </a>
+          )}
+        </div>
       </section>
 
       <section className="bg-slate-800 rounded-xl p-5 space-y-4">

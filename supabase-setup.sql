@@ -23,6 +23,7 @@ ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_account_id TEXT;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_onboarding_complete BOOLEAN DEFAULT false;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS payment_info TEXT;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_payment_link TEXT;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS shop_slug TEXT UNIQUE;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS email_notifications BOOLEAN DEFAULT true;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS service_type TEXT DEFAULT 'detailing';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS provides_protection BOOLEAN DEFAULT false;
@@ -152,7 +153,7 @@ CREATE TABLE IF NOT EXISTS inspections (
 -- ============================================
 -- Seed: demo shop
 -- ============================================
-INSERT INTO shops (id, business_name, owner_email, base_sedan_price, base_suv_price, base_truck_price, is_weekend_pricing_active, payment_info, stripe_payment_link, service_type, provides_protection, email_notifications)
+INSERT INTO shops (id, business_name, owner_email, base_sedan_price, base_suv_price, base_truck_price, is_weekend_pricing_active, payment_info, stripe_payment_link, service_type, provides_protection, email_notifications, shop_slug)
 VALUES (
   '4a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
   'Premium Detailing Co.',
@@ -160,11 +161,12 @@ VALUES (
   150, 200, 250, false,
   'UPI: premium@upi',
   '',
-  'both', true, true
+  'both', true, true, 'premium-detailing'
 )
 ON CONFLICT (id) DO UPDATE SET
   owner_email = EXCLUDED.owner_email,
   email_notifications = EXCLUDED.email_notifications,
+  shop_slug = EXCLUDED.shop_slug,
   stripe_account_id = COALESCE(EXCLUDED.stripe_account_id, shops.stripe_account_id),
   stripe_onboarding_complete = COALESCE(EXCLUDED.stripe_onboarding_complete, shops.stripe_onboarding_complete);
 
