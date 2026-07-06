@@ -283,6 +283,18 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
       </button>
 
       <section className="bg-slate-800 rounded-xl p-5 space-y-4">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Generate Shop Link</h2>
+        <p className="text-xs text-slate-400">Your customers can book directly at this URL — no iframe needed.</p>
+        <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono break-all border border-slate-700">
+          {`https://detailershield-${shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-shop'}.vercel.app`}
+        </div>
+        <button onClick={() => { navigator.clipboard.writeText(`https://detailershield-${shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-shop'}.vercel.app`); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+          className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition">
+          {copied ? 'Copied!' : 'Copy Shop Link'}
+        </button>
+      </section>
+
+      <section className="bg-slate-800 rounded-xl p-5 space-y-4">
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Embed Widget</h2>
         <p className="text-xs text-slate-400">Copy this iframe code and paste it into your website to show the booking widget.</p>
         <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono break-all select-all border border-slate-700">

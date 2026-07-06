@@ -41,7 +41,7 @@ export async function POST(request) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'DetailerShield <notifications@yourdomain.com>',
+        from: 'DetailerShield <onboarding@resend.dev>',
         to: shopEmail,
         subject: `New Booking — ${bookingId} — ${customerName}`,
         html,

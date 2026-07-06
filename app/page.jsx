@@ -30,22 +30,33 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="mt-24 max-w-lg mx-auto">
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 space-y-3">
-            <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">✓</div>
-            <h3 className="text-sm font-bold text-center">Everything You Need to Run Your Detailing Business</h3>
-            <ul className="text-sm text-slate-400 leading-relaxed space-y-1.5">
-              <li>✓ Set your own pricing — base prices &amp; condition modifiers</li>
-              <li>✓ Offer detailing, protection, or both</li>
-              <li>✓ Collect 20% deposits by card via Stripe — funds go directly to you</li>
-              <li>✓ Set your schedule: hours, days off, number of bays, job times</li>
-              <li>✓ Customers pick from real-time available slots</li>
-              <li>✓ Calendar-based service status with check-in flow</li>
-              <li>✓ Walk-around inspection with 5-side photo capture</li>
-              <li>✓ Preview your widget before sharing</li>
-            </ul>
+          <div className="mt-24 max-w-lg mx-auto space-y-4">
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 space-y-3">
+              <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">✓</div>
+              <h3 className="text-sm font-bold text-center">Everything You Need to Run Your Detailing Business</h3>
+              <ul className="text-sm text-slate-400 leading-relaxed space-y-1.5">
+                <li>✓ Set your own pricing — base prices &amp; condition modifiers</li>
+                <li>✓ Offer detailing, protection, or both</li>
+                <li>✓ Collect 20% deposits by card via Stripe — funds go directly to you</li>
+                <li>✓ Set your schedule: hours, days off, number of bays, job times</li>
+                <li>✓ Customers pick from real-time available slots</li>
+                <li>✓ Calendar-based service status with check-in flow</li>
+                <li>✓ Walk-around inspection with 5-side photo capture</li>
+                <li>✓ Preview your widget before sharing</li>
+              </ul>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-600/10 to-purple-600/10 border border-blue-500/20 rounded-xl p-6 space-y-3 text-center">
+              <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center mx-auto text-lg font-bold">&#9889;</div>
+              <h3 className="text-sm font-bold">Get a Website in 60 Seconds</h3>
+              <p className="text-sm text-slate-400">
+                Every detailer gets a branded page at <span className="text-blue-300 font-mono text-xs">detailershield-<span className="italic">yourbusiness</span>.vercel.app</span> with your booking widget, pricing, and schedule built in. No coding, no hosting setup — just pick a name and go.
+              </p>
+              <p className="text-xs text-slate-500">
+                Same sign-in for your dashboard and website. Share the link with customers instead of embedding an iframe.
+              </p>
+            </div>
           </div>
-        </div>
 
         <div className="mt-16 text-center">
           <Link href="/login?mode=signup" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold tracking-wide transition shadow-lg shadow-blue-600/20">
