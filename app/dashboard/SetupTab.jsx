@@ -291,19 +291,17 @@ export default function SetupTab({ supabase, shop, setShop, pricingRules, setPri
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Shop Page</h2>
         <p className="text-xs text-slate-400">Customers book directly at this URL — no iframe needed. Share it anywhere.</p>
         <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono break-all border border-slate-700 select-all">
-          {`https://detailershield.vercel.app/${shopSlug || 'your-shop'}`}
+          {`https://detailershield.vercel.app/${shopSlug || shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-shop'}`}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => { navigator.clipboard.writeText(`https://detailershield.vercel.app/${shopSlug || 'your-shop'}`); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+          <button onClick={() => { const slug = shopSlug || shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-shop'; navigator.clipboard.writeText(`https://detailershield.vercel.app/${slug}`); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
             className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition">
             {copied ? 'Copied!' : 'Copy Shop Link'}
           </button>
-          {shopSlug && (
-            <a href={`https://detailershield.vercel.app/${shopSlug}`} target="_blank" rel="noreferrer"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition text-center">
-              Open
-            </a>
-          )}
+          <a href={`https://detailershield.vercel.app/${shopSlug || shop.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-shop'}`} target="_blank" rel="noreferrer"
+            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition text-center">
+            Open
+          </a>
         </div>
       </section>
 
